@@ -71,6 +71,8 @@ const CampusMap = () => {
   const [supercluster, setSupercluster] = useState<any>(null);
   const [mapBounds, setMapBounds] = useState<number[]>([]);
   const [mapStyle, setMapStyle] = useState('mapbox://styles/mapbox/satellite-streets-v12');
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
 
   // Fetch Mapbox token and locations from Supabase
   useEffect(() => {
@@ -1026,7 +1028,79 @@ const CampusMap = () => {
         Share My Location
       </Button>
 
-     
+      {/* Feedback Button */}
+      <button
+        className="fixed bottom-32 right-4 sm:right-6 z-50 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg p-3 transition"
+        onClick={() => setShowFeedback(true)}
+        aria-label="Feedback"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h16M3 7l9 7 9-7M4 7h16M4 17h16" />
+        </svg>
+      </button>
+
+      {/* Feedback Form (modal or popup) */}
+      {showFeedback && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md p-4">
+            <CardContent>
+              <h3 className="text-lg font-semibold mb-2">Send Feedback</h3>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                className="w-full p-2 text-sm rounded-md border focus:ring-1 focus:ring-primary focus:outline-none resize-none h-24"
+                placeholder="Enter your feedback here..."
+                aria-label="Feedback message"
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFeedback(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch('https://formspree.io/f/movpakoq', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: feedbackText })
+                      });
+                      if (res.ok) {
+                        toast({
+                          title: "Feedback Sent",
+                          description: "Thank you for your feedback!",
+                          duration: 4000
+                        });
+                        setShowFeedback(false);
+                        setFeedbackText('');
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Failed to send feedback.",
+                          duration: 4000
+                        });
+                      }
+                    } catch {
+                      toast({
+                        title: "Error",
+                        description: "Failed to send feedback.",
+                        duration: 4000
+                      });
+                    }
+                  }}
+                  disabled={!feedbackText.trim()}
+                >
+                  Send
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
